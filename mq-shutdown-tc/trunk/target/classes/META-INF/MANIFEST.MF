@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1481268647345
+Build-Jdk: 1.8.0_91
+Built-By: jjansen
+Bundle-Blueprint: OSGI-INF/blueprint/blueprint.xml
+Bundle-ManifestVersion: 2
+Bundle-Name: mq-shutdown-tc
+Bundle-SymbolicName: GsRtOSConnector
+Bundle-Version: 1.0.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: aero.inform.realtime.connector.objectserver;version="1.0
+ .0"
+Import-Package: io.netty.handler.codec,io.netty.handler.codec.string,jav
+ ax.jms;version="[1.1,2)",org.apache.activemq.camel.component;version="[
+ 5.12,6)",org.apache.camel;version="[2.16,3)",org.apache.camel.builder;v
+ ersion="[2.16,3)",org.apache.camel.component.jms;version="[2.15,3)",org
+ .apache.camel.component.netty4;version="[2.16,3)",org.apache.camel.mode
+ l;version="[2.16,3)",org.apache.camel.spi;version="[2.16,3)",org.apache
+ .camel.spring.spi;version="[2.15,3)",org.osgi.service.blueprint;version
+ ="[1.0.0,2.0.0)",org.springframework.jms.connection
+Import-Service: javax.jms.ConnectionFactory;multiple:=false;filter=(&(tr
+ ansacted=false)(name=default-cf))
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Tool: Bnd-3.0.0.201509101326

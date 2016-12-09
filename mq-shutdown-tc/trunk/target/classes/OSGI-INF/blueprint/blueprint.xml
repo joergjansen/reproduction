@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+                               http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd" >
+
+  <!-- configuration parameters -->
+  <cm:property-placeholder persistent-id="aero.inform.realtime.os" update-strategy="reload">
+    <cm:default-properties>
+      <cm:property name="host" value="localhost"/>
+      <cm:property name="port" value="30100"/>
+      <cm:property name="listeningPort" value="30250"/>
+      <cm:property name="requestTimeout" value="5000" />
+      <cm:property name="connectTimeout" value="1000" />
+      <cm:property name="activemq.concurrentConsumers" value="5" />
+      <cm:property name="activemq.asyncConsumer" value="1" />
+
+      <cm:property name="deadLetterRedeliveryDelay" value="100" />
+      <cm:property name="deadLetterMaximumRedeliveries" value="5" />
+      <cm:property name="connectionTimeoutRedeliveryDelay" value="1000" />
+      <cm:property name="connectionTimeoutRedeliveries" value="5" />
+      <cm:property name="osResultLoggingLevel" value="TRACE" />
+    </cm:default-properties>
+  </cm:property-placeholder>
+
+  <!-- netty registry definitions -->
+  <bean id="length-encoder" class="io.netty.handler.codec.LengthFieldPrepender">
+    <argument  value="4"/>
+  </bean>
+
+  <bean id="string-encoder" class="io.netty.handler.codec.string.StringEncoder"/>
+
+  <bean id="length-decoder" class="org.apache.camel.component.netty4.ChannelHandlerFactories" factory-method="newLengthFieldBasedFrameDecoder">
+    <argument  value="1048576"/>
+    <argument  value="0"/>
+    <argument  value="4"/>
+    <argument  value="0"/>
+    <argument  value="4"/>
+  </bean>
+
+  <bean id="string-decoder" class="io.netty.handler.codec.string.StringDecoder"/>
+
+  <!-- bean definitions -->
+  <bean id="objectServerConfig" class="aero.inform.realtime.connector.core.ObjectServerConfig" />
+
+  <bean id="OSRoutesBuilder" class="aero.inform.realtime.connector.core.OSClientRouteBuilder"/>
+
+  <!-- activemq definition -->
+  <reference id="pooledConnectionFactory" interface="javax.jms.ConnectionFactory"
+             filter="(&amp;(transacted=false)(name=default-cf))" />
+
+  <bean id="jmsConfig" class="org.apache.camel.component.jms.JmsConfiguration">
+    <property name="connectionFactory" ref="pooledConnectionFactory"/>
+    <property name="concurrentConsumers" value="10"/>
+  </bean>
+
+  <bean id="required" class="org.apache.camel.spring.spi.SpringTransactionPolicy">
+    <property name="transactionManager" ref="jmsTransactionManager"/>
+    <property name="propagationBehaviorName" value="PROPAGATION_REQUIRED"/>
+  </bean>
+
+  <bean id="jmsTransactionManager" class="org.springframework.jms.connection.JmsTransactionManager">
+    <property name="connectionFactory" ref="pooledConnectionFactory" />
+  </bean>
+
+  <bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+    <property name="configuration" ref="jmsConfig"/>
+
+    <!-- if we are using transacted then enable CACHE_CONSUMER (if not using XA) to run faster
+         see more details at: http://camel.apache.org/jms-->
+    <property name="transacted" value="true"/>
+    <property name="cacheLevelName" value="CACHE_CONSUMER" />
+  </bean>
+
+  <camelContext id="ObjectServerConnection" xmlns="http://camel.apache.org/schema/blueprint" >
+    <routeBuilder ref="OSRoutesBuilder" />
+  </camelContext>
+</blueprint>
+
